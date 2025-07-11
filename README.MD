@@ -39,7 +39,6 @@ Certifique-se de ter os seguintes itens instalados:
 
 ### 2. Clonar o repositório
 
-```bash
 git clone https://github.com/seu-usuario/jump-n-shoot.git
 cd jump-n-shoot
 
