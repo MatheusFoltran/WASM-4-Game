@@ -462,95 +462,80 @@ func proceduralSpawn() {
     }
 }
 
-// Melhorar os padrões para mais variação
 func spawnEasyPattern(x int32) {
     choice := randInt(100)
-    if choice < 50 {
+    if choice < 30 {
         spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
-    } else if choice < 75 {
+    } else if choice < 55 {
         spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
-    } else if choice < 90 {
-        spawnEnemy(x, 60 + randInt(40), ENEMY_FLYING)
-    } else {
-        // Spawn duplo ocasional
-        spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
-        spawnObstacle(x + 50 + randInt(30), GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
+    } else if choice < 75 {
+        spawnEnemy(x, 80 + randInt(20), ENEMY_FLYING)
+    } else if choice < 95 {
+        if randInt(2) == 0 {
+            spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
+        } else {
+            spawnObstacle(x, GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
+        }
     }
+    // 10% sem nada
 }
 
-// Foco em obstáculos
 func spawnJumpPattern(x int32) {
     choice := randInt(100)
-    if choice < 35 {
+    if choice < 40 {
         spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
     } else if choice < 60 {
         spawnObstacle(x, GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
     } else if choice < 80 {
-        // Combo de obstáculos
         spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
-        spawnObstacle(x + 40 + randInt(20), GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
-    } else {
-        // Obstáculo + inimigo aéreo
+    } else if choice < 95 {
         obstacleType := OBSTACLE_ROCK
         if randInt(2) == 0 {
             obstacleType = OBSTACLE_SPIKE
         }
         spawnObstacle(x, GROUND_Y-8, 8, 8, int8(obstacleType))
-        spawnEnemy(x + 30 + randInt(40), 50 + randInt(40), ENEMY_FLYING)
+        spawnEnemy(x + 100 + randInt(50), 80 + randInt(30), ENEMY_FLYING)
     }
+    // 5% sem nada
 }
 
-// Foco em inimigos
 func spawnShootPattern(x int32) {
     choice := randInt(100)
     if choice < 40 {
-        spawnEnemy(x, 50 + randInt(50), ENEMY_FLYING)
-    } else if choice < 70 {
-        // Dois voadores em alturas diferentes
-        spawnEnemy(x, 40 + randInt(30), ENEMY_FLYING)
-        spawnEnemy(x + 50 + randInt(30), 70 + randInt(40), ENEMY_FLYING)
-    } else if choice < 85 {
-        // Voador + terrestre
-        spawnEnemy(x, 60 + randInt(35), ENEMY_FLYING)
-        spawnEnemy(x + 60 + randInt(40), GROUND_Y-12, ENEMY_GROUND)
-    } else {
-        // Formação triangular
-        spawnEnemy(x, 45 + randInt(20), ENEMY_FLYING)
-        spawnEnemy(x + 40, 70 + randInt(25), ENEMY_FLYING)
-        spawnEnemy(x + 80, 55 + randInt(30), ENEMY_FLYING)
+        spawnEnemy(x, 80 + randInt(20), ENEMY_FLYING)
+    } else if choice < 60 {
+        spawnEnemy(x, 70 + randInt(20), ENEMY_FLYING)
+        spawnEnemy(x + 100 + randInt(50), 90 + randInt(20), ENEMY_FLYING)
+    } else if choice < 80 {
+        spawnEnemy(x, 80 + randInt(20), ENEMY_FLYING)
+    } else if choice < 95 {
+        spawnEnemy(x, 70 + randInt(20), ENEMY_FLYING)
+        spawnEnemy(x + 120 + randInt(50), 90 + randInt(20), ENEMY_FLYING)
     }
+    // 5% sem nada
 }
 
-// Diverso
 func spawnMixedPattern(x int32) {
     choice := randInt(100)
-    if choice < 25 {
-        // Caos controlado - tudo junto
+    if choice < 20 {
         spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
-        spawnEnemy(x + 40 + randInt(30), 50 + randInt(40), ENEMY_FLYING)
-        spawnObstacle(x + 80 + randInt(40), GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
-    } else if choice < 50 {
-        // Sequência de obstáculos
+        spawnEnemy(x + 120 + randInt(50), 80 + randInt(30), ENEMY_FLYING)
+    } else if choice < 45 {
         spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
-        spawnObstacle(x + 30 + randInt(20), GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
-        spawnEnemy(x + 70 + randInt(30), 60 + randInt(30), ENEMY_FLYING)
+        spawnEnemy(x + 120 + randInt(50), 80 + randInt(20), ENEMY_FLYING)
     } else if choice < 75 {
-        // Onda de inimigos
         spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
-        spawnEnemy(x + 35 + randInt(25), GROUND_Y-12, ENEMY_GROUND)
-        spawnEnemy(x + 70 + randInt(35), 45 + randInt(45), ENEMY_FLYING)
-    } else {
-        // Padrão aleatório complexo
-        numSpawns := 2 + randInt(3) // 2-4 spawns
+        spawnEnemy(x + 100 + randInt(40), 80 + randInt(20), ENEMY_FLYING)
+    } else if choice < 90 {
+        numSpawns := 1 + randInt(1)
         for i := 0; i < int(numSpawns); i++ {
             spawnChoice := randInt(3)
-            offsetX := int32(i) * (30 + randInt(25))
-            
+            offsetX := int32(i) * (100 + randInt(50))
             switch spawnChoice {
             case 0:
                 spawnEnemy(x + offsetX, GROUND_Y-12, ENEMY_GROUND)
             case 1:
-                spawnEnemy(x + offsetX, 45 + randInt(50), ENEMY_FLYING)
+                spawnEnemy(x + offsetX, 80 + randInt(20), ENEMY_FLYING)
             case 2:
                 obstType := OBSTACLE_ROCK
                 if randInt(2) == 0 {
@@ -560,6 +545,7 @@ func spawnMixedPattern(x int32) {
             }
         }
     }
+    // 10% sem nada
 }
 
 func updateMenu() {
