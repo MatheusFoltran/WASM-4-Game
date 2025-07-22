@@ -191,6 +191,10 @@ var (
 // Variável global para controlar direção da mira
 var aimDirection int8 = AIM_HORIZONTAL
 
+// Cooldown
+var gameOverTimer uint8
+var previousGamepadState uint8
+
 // Variáveis globais para controle de entrada
 var (
     prevMouseButtons uint8 = 0
@@ -572,7 +576,7 @@ func updateGame() {
     proceduralSpawn()
     
     if (player.flags & 0x02) == 0 { // not alive
-        gameState = STATE_GAME_OVER
+        enterGameOver()
         if score > highScore {
             highScore = score
         }
@@ -595,13 +599,33 @@ func updateAmmo() {
     }
 }
 
+func enterGameOver() {
+    gameState = STATE_GAME_OVER
+    gameOverTimer = 120 // 2 segundos
+    previousGamepadState = *GAMEPAD1 // Captura o estado atual dos botões
+}
+
 func updateGameOver() {
     gamepad := *GAMEPAD1
     
-    if gamepad&(BUTTON_1|BUTTON_2) != 0 {
+    // Primeiro, aguarda o timer E que os botões sejam soltos
+    if gameOverTimer > 0 {
+        gameOverTimer--
+        previousGamepadState = gamepad // Atualiza o estado anterior
+        return
+    }
+    
+    // Só aceita input se:
+    // 1. Algum botão foi pressionado AGORA
+    // 2. E NÃO estava pressionado no frame anterior
+    buttonJustPressed := (gamepad&(BUTTON_1|BUTTON_2)) != 0 && (previousGamepadState&(BUTTON_1|BUTTON_2)) == 0
+    
+    if buttonJustPressed {
         gameState = STATE_MENU
         resetGame()
     }
+    
+    previousGamepadState = gamepad
 }
 
 func startGame() {
