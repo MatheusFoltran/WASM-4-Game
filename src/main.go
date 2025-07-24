@@ -73,7 +73,6 @@ const (
     PATTERN_EASY = 0
     PATTERN_JUMP = 1
     PATTERN_SHOOT = 2
-    PATTERN_MIXED = 3
 )
 
 // Sprites
@@ -206,7 +205,7 @@ var (
     currentPlayerSpeed int32 = 1
     currentEnemySpeed int32 = 1
     currentBulletSpeed int32 = 3
-    currentJumpPower int8 = -10
+    currentJumpPower int8 = -11
 )
 
 // Sistema de geração procedural
@@ -350,21 +349,21 @@ func clearArrays() {
 func updateSpeeds() {
     if score >= 500 {
         // Nível extremo
-        currentPlayerSpeed = 2
+        currentPlayerSpeed = 3
         currentEnemySpeed = 2
         currentBulletSpeed = 5
-        currentJumpPower = -8
+        currentJumpPower = -9
     } else if score >= 300 {
         // Nível difícil
         currentPlayerSpeed = 2
-        currentEnemySpeed = 1
-        currentBulletSpeed = 4
-        currentJumpPower = -9
+        currentEnemySpeed = 2
+        currentBulletSpeed = 5
+        currentJumpPower = -10
     } else if score >= 100 {
         // Nível médio
-        currentPlayerSpeed = 1
+        currentPlayerSpeed = 2
         currentEnemySpeed = 1
-        currentBulletSpeed = 4
+        currentBulletSpeed = 3
         currentJumpPower = -10
     }
     // else: mantém velocidades iniciais (pulo mais forte para compensar velocidade baixa)
@@ -406,8 +405,8 @@ func proceduralSpawn() {
     spawnTimer++
     patternTimer++
     
-    // Muda padrão com tempo mais variado (7-15 segundos)
-    patternChangeTime := 420 + randInt(480) // 7-15 segundos
+    // Muda padrão com tempo mais longo (15-25 segundos)
+    patternChangeTime := 900 + randInt(600) // 15-25 segundos
     if patternTimer > int32(patternChangeTime) {
         patternTimer = 0
         // Evita repetir o mesmo padrão
@@ -445,38 +444,28 @@ func proceduralSpawn() {
             spawnJumpPattern(baseSpawnX)
         case PATTERN_SHOOT:
             spawnShootPattern(baseSpawnX)
-        case PATTERN_MIXED:
-            spawnMixedPattern(baseSpawnX)
         }
         
         lastSpawnX = baseSpawnX
         
-        // Intervalo mais variado e dinâmico
-        difficulty := gameFrame / 300 // Aumenta dificuldade a cada 5 segundos
-        if difficulty > 40 {
-            difficulty = 40 // Limita dificuldade máxima
-        }
-        
-        baseDelay := int32(60 - difficulty) // De 60 a 20 frames
-        if baseDelay < 20 {
-            baseDelay = 20
-        }
-        
-        nextSpawnDelay = baseDelay + randInt(25) // Variação de 0-25 frames
+        // Delay simples e fixo
+        nextSpawnDelay = 60 + randInt(30) // Entre 60-90 frames (1-1.5 segundos)
     }
 }
 
 func spawnEasyPattern(x int32) {
+    // Divide claramente: 50% inimigos, 40% obstáculos, 10% nada
     choice := randInt(100)
-    if choice < 30 {
+    if choice < 25 {
+        // Só inimigo terrestre
         spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
-    } else if choice < 55 {
-        spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
-    } else if choice < 75 {
+    } else if choice < 50 {
+        // Só inimigo voador
         spawnEnemy(x, 80 + randInt(20), ENEMY_FLYING)
-    } else if choice < 95 {
+    } else if choice < 90 {
+        // Só obstáculos
         if randInt(2) == 0 {
-            spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
+            spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
         } else {
             spawnObstacle(x, GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
         }
@@ -498,58 +487,24 @@ func spawnJumpPattern(x int32) {
             obstacleType = OBSTACLE_SPIKE
         }
         spawnObstacle(x, GROUND_Y-8, 8, 8, int8(obstacleType))
-        spawnEnemy(x + 100 + randInt(50), 80 + randInt(30), ENEMY_FLYING)
     }
     // 5% sem nada
 }
 
 func spawnShootPattern(x int32) {
     choice := randInt(100)
-    if choice < 40 {
-        spawnEnemy(x, 80 + randInt(20), ENEMY_FLYING)
-    } else if choice < 60 {
-        spawnEnemy(x, 70 + randInt(20), ENEMY_FLYING)
-        spawnEnemy(x + 100 + randInt(50), 90 + randInt(20), ENEMY_FLYING)
+    if choice < 50 {
+        // Um inimigo voador apenas
+        spawnEnemy(x, 70 + randInt(30), ENEMY_FLYING)
     } else if choice < 80 {
-        spawnEnemy(x, 80 + randInt(20), ENEMY_FLYING)
-    } else if choice < 95 {
-        spawnEnemy(x, 70 + randInt(20), ENEMY_FLYING)
-        spawnEnemy(x + 120 + randInt(50), 90 + randInt(20), ENEMY_FLYING)
-    }
-    // 5% sem nada
-}
-
-func spawnMixedPattern(x int32) {
-    choice := randInt(100)
-    if choice < 20 {
+        // Dois inimigos voadores em alturas diferentes
+        spawnEnemy(x, 60 + randInt(20), ENEMY_FLYING)
+        spawnEnemy(x + 150 + randInt(80), 90 + randInt(20), ENEMY_FLYING)
+    } else {
+        // Dois inimigos terrestres (mais fácil que terrestre + voador)
         spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
-        spawnEnemy(x + 120 + randInt(50), 80 + randInt(30), ENEMY_FLYING)
-    } else if choice < 45 {
-        spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
-        spawnEnemy(x + 120 + randInt(50), 80 + randInt(20), ENEMY_FLYING)
-    } else if choice < 75 {
-        spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
-        spawnEnemy(x + 100 + randInt(40), 80 + randInt(20), ENEMY_FLYING)
-    } else if choice < 90 {
-        numSpawns := 1 + randInt(1)
-        for i := 0; i < int(numSpawns); i++ {
-            spawnChoice := randInt(3)
-            offsetX := int32(i) * (100 + randInt(50))
-            switch spawnChoice {
-            case 0:
-                spawnEnemy(x + offsetX, GROUND_Y-12, ENEMY_GROUND)
-            case 1:
-                spawnEnemy(x + offsetX, 80 + randInt(20), ENEMY_FLYING)
-            case 2:
-                obstType := OBSTACLE_ROCK
-                if randInt(2) == 0 {
-                    obstType = OBSTACLE_SPIKE
-                }
-                spawnObstacle(x + offsetX, GROUND_Y-8, 8, 8, int8(obstType))
-            }
-        }
+        spawnEnemy(x + 120 + randInt(70), GROUND_Y-12, ENEMY_GROUND)
     }
-    // 10% sem nada
 }
 
 func updateMenu() {
@@ -713,7 +668,7 @@ func updatePlayer() {
     
     // Movimento horizontal - mais rápido no ar para facilitar pulos
     if (player.flags & 0x01) == 0 { // not onGround (está no ar)
-        player.x += currentPlayerSpeed + 1  // O "+1" da um boost. Retirar para velocidade normal
+        player.x += currentPlayerSpeed
     } else {
         player.x += currentPlayerSpeed
     }
