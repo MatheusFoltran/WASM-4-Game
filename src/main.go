@@ -371,132 +371,112 @@ func updateSpeeds() {
 
 // Gerador de números pseudo-aleatórios simples
 func rng() uint32 {
-    rngSeed = (rngSeed*1664525 + 1013904223) & 0x7FFFFFFF
-    // Melhora a distribuição com XOR shift
-    rngSeed = rngSeed ^ (rngSeed >> 16)
-    rngSeed = rngSeed ^ (rngSeed << 3)
-    return rngSeed
+	rngSeed = (rngSeed*1664525 + 1013904223) & 0x7FFFFFFF
+	// Melhora a distribuição com XOR shift
+	rngSeed = rngSeed ^ (rngSeed >> 16)
+	rngSeed = rngSeed ^ (rngSeed << 3)
+	return rngSeed
 }
 
 // Retorna um número entre 0 e max-1
 func randInt(max int32) int32 {
-    // Chama rng() duas vezes para melhor distribuição
-    val1 := rng()
-    val2 := rng()
-    combined := (val1 + val2) / 2
-    return int32(combined % uint32(max))
+	// Chama rng() duas vezes para melhor distribuição
+	val1 := rng()
+	val2 := rng()
+	combined := (val1 + val2) / 2
+	return int32(combined % uint32(max))
 }
 
 // Função para embaralhar ainda mais a seed durante o jogo
 func shuffleSeed() {
-    rngSeed = rngSeed ^ uint32(gameFrame)
-    rngSeed = (rngSeed << 7) ^ (rngSeed >> 25)
-    rngSeed = rngSeed ^ uint32(score*3 + int32(player.x/10))
+	rngSeed = rngSeed ^ uint32(gameFrame)
+	rngSeed = (rngSeed << 7) ^ (rngSeed >> 25)
+	rngSeed = rngSeed ^ uint32(score*3 + int32(player.x/10))
 }
 
 // Gera aleatoriedade no design do jogo
 func proceduralSpawn() {
-
-    // Embaralha a seed periodicamente para mais variação
-    if spawnTimer % 60 == 0 {
-        shuffleSeed()
-    }
-
-    spawnTimer++
-    patternTimer++
-    
-    // Muda padrão com tempo mais longo (15 segundos)
-    patternChangeTime := 900
-    if patternTimer > int32(patternChangeTime) {
-        patternTimer = 0
-        // Evita repetir o mesmo padrão
-        newPattern := int8(randInt(4))
-        if newPattern == currentPattern {
-            newPattern = int8((newPattern + 1) % 4)
-        }
-        currentPattern = newPattern
-    }
-    
-    // Re-embaralha baseado no tempo real transcorrido
-    if spawnTimer % 180 == 0 { // A cada 3 segundos
-        timeSeed := frameCounter + gameFrame*7 + score*11
-        rngSeed = rngSeed ^ uint32(timeSeed)
-        rng() // Consome um número para embaralhar mais
-    }
-
-    if spawnTimer >= nextSpawnDelay {
-        spawnTimer = 0
-        
-        // Posição de spawn mais variada
-        baseSpawnX := cameraX + SCREEN_WIDTH + 30 + randInt(80)
-        
-        // Evita spawns muito próximos com distância variável
-        minDistance := 50 + randInt(40)
-        if baseSpawnX - lastSpawnX < int32(minDistance) {
-            baseSpawnX = lastSpawnX + int32(minDistance) + randInt(30)
-        }
-        
-        // Spawn baseado no padrão atual
-        switch currentPattern {
-        case PATTERN_EASY:
-            spawnEasyPattern(baseSpawnX)
-        case PATTERN_JUMP:
-            spawnJumpPattern(baseSpawnX)
-        case PATTERN_SHOOT:
-            spawnShootPattern(baseSpawnX)
-        }
-        
-        lastSpawnX = baseSpawnX
-    }
+	patternTimer++
+	
+	// Muda padrão a cada 3 segundos (300 frames a 60fps)
+	patternChangeTime := 180
+	if patternTimer >= int32(patternChangeTime) {
+		patternTimer = 0
+		
+		// Embaralha a seed antes de mudar padrão
+		shuffleSeed()
+		
+		// Evita repetir o mesmo padrão
+		newPattern := int8(randInt(3)) // 0, 1, 2 (EASY, JUMP, SHOOT)
+		if newPattern >= currentPattern {
+			newPattern = int8((newPattern + 1) % 3)
+		}
+		currentPattern = newPattern
+		
+		// Spawna UMA VEZ baseado no novo padrão
+		baseSpawnX := cameraX + SCREEN_WIDTH + 30
+		
+		// Spawn baseado no padrão atual
+		switch currentPattern {
+		case PATTERN_EASY:
+			spawnEasyPattern(baseSpawnX)
+		case PATTERN_JUMP:
+			spawnJumpPattern(baseSpawnX)
+		case PATTERN_SHOOT:
+			spawnShootPattern(baseSpawnX)
+		}
+		
+		lastSpawnX = baseSpawnX
+	}
 }
 
 func spawnEasyPattern(x int32) {
-    choice := randInt(100)
-    if choice < 30 {
-        // Só inimigo terrestre
-        spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
-    } else if choice < 60 {
-        // Só inimigo voador
-        spawnEnemy(x, 80 + randInt(20), ENEMY_FLYING)
-    } else {
-        // Um obstáculo
-        spawnObstacle(x, GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
-    }
+	choice := randInt(100)
+	if choice < 30 {
+		// Só inimigo terrestre
+		spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
+	} else if choice < 60 {
+		// Só inimigo voador
+		spawnEnemy(x, 80 + randInt(20), ENEMY_FLYING)
+	} else {
+		// Um obstáculo
+		spawnObstacle(x, GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
+	}
 }
 
 func spawnJumpPattern(x int32) {
-    choice := randInt(100)
-    if choice < 40 {
-        spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
-    } else if choice < 60 {
-        spawnObstacle(x, GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
-    } else if choice < 80 {
-        spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
-    } else {
-        obstacleType := OBSTACLE_ROCK
-        if randInt(2) == 0 {
-            obstacleType = OBSTACLE_SPIKE
-        }
-        spawnObstacle(x, GROUND_Y-8, 8, 8, int8(obstacleType))
-    }
+	choice := randInt(100)
+	if choice < 40 {
+		spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
+	} else if choice < 60 {
+		spawnObstacle(x, GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
+	} else if choice < 80 {
+		spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
+	} else {
+		obstacleType := OBSTACLE_ROCK
+		if randInt(2) == 0 {
+			obstacleType = OBSTACLE_SPIKE
+		}
+		spawnObstacle(x, GROUND_Y-8, 8, 8, int8(obstacleType))
+	}
 }
 
 func spawnShootPattern(x int32) {
-    choice := randInt(100)
-    if choice < 25 {
-        // Um inimigo voador apenas
-        spawnEnemy(x, 70 + randInt(30), ENEMY_FLYING)
-    } else if choice < 50{
-        spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
-    } else if choice < 75 {
-        // Dois inimigos voadores em alturas diferentes
-        spawnEnemy(x, 60 + randInt(20), ENEMY_FLYING)
-        spawnEnemy(x + 150 + randInt(80), 90 + randInt(20), ENEMY_FLYING)
-    } else {
-        // Dois inimigos terrestres (mais fácil que terrestre + voador)
-        spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
-        spawnEnemy(x + 120 + randInt(70), GROUND_Y-12, ENEMY_GROUND)
-    }
+	choice := randInt(100)
+	if choice < 25 {
+		// Um inimigo voador apenas
+		spawnEnemy(x, 70 + randInt(30), ENEMY_FLYING)
+	} else if choice < 50 {
+		spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
+	} else if choice < 75 {
+		// Dois inimigos voadores em alturas diferentes
+		spawnEnemy(x, 60 + randInt(20), ENEMY_FLYING)
+		spawnEnemy(x + 150 + randInt(80), 90 + randInt(20), ENEMY_FLYING)
+	} else {
+		// Dois inimigos terrestres
+		spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
+		spawnEnemy(x + 120 + randInt(70), GROUND_Y-12, ENEMY_GROUND)
+	}
 }
 
 func updateMenu() {
