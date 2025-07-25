@@ -405,8 +405,8 @@ func proceduralSpawn() {
     spawnTimer++
     patternTimer++
     
-    // Muda padrão com tempo mais longo (15-25 segundos)
-    patternChangeTime := 900 + randInt(600) // 15-25 segundos
+    // Muda padrão com tempo mais longo (15 segundos)
+    patternChangeTime := 900
     if patternTimer > int32(patternChangeTime) {
         patternTimer = 0
         // Evita repetir o mesmo padrão
@@ -447,30 +447,21 @@ func proceduralSpawn() {
         }
         
         lastSpawnX = baseSpawnX
-        
-        // Delay simples e fixo
-        nextSpawnDelay = 60 + randInt(30) // Entre 60-90 frames (1-1.5 segundos)
     }
 }
 
 func spawnEasyPattern(x int32) {
-    // Divide claramente: 50% inimigos, 40% obstáculos, 10% nada
     choice := randInt(100)
-    if choice < 25 {
+    if choice < 30 {
         // Só inimigo terrestre
         spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
-    } else if choice < 50 {
+    } else if choice < 60 {
         // Só inimigo voador
         spawnEnemy(x, 80 + randInt(20), ENEMY_FLYING)
-    } else if choice < 90 {
-        // Só obstáculos
-        if randInt(2) == 0 {
-            spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
-        } else {
-            spawnObstacle(x, GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
-        }
+    } else {
+        // Um obstáculo
+        spawnObstacle(x, GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
     }
-    // 10% sem nada
 }
 
 func spawnJumpPattern(x int32) {
@@ -481,22 +472,23 @@ func spawnJumpPattern(x int32) {
         spawnObstacle(x, GROUND_Y-8, 6, 8, OBSTACLE_SPIKE)
     } else if choice < 80 {
         spawnObstacle(x, GROUND_Y-8, 8, 8, OBSTACLE_ROCK)
-    } else if choice < 95 {
+    } else {
         obstacleType := OBSTACLE_ROCK
         if randInt(2) == 0 {
             obstacleType = OBSTACLE_SPIKE
         }
         spawnObstacle(x, GROUND_Y-8, 8, 8, int8(obstacleType))
     }
-    // 5% sem nada
 }
 
 func spawnShootPattern(x int32) {
     choice := randInt(100)
-    if choice < 50 {
+    if choice < 25 {
         // Um inimigo voador apenas
         spawnEnemy(x, 70 + randInt(30), ENEMY_FLYING)
-    } else if choice < 80 {
+    } else if choice < 50{
+        spawnEnemy(x, GROUND_Y-12, ENEMY_GROUND)
+    } else if choice < 75 {
         // Dois inimigos voadores em alturas diferentes
         spawnEnemy(x, 60 + randInt(20), ENEMY_FLYING)
         spawnEnemy(x + 150 + randInt(80), 90 + randInt(20), ENEMY_FLYING)
